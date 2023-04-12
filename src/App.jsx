@@ -6,12 +6,19 @@ function App() {
   const [todo, setTodo] = useState('');
   const [todos, setTodos] = useState([]);
   const [theme, setTheme] = useState('');
+  const [showInstallButton, setShowInstallButton] = useState(false);
+  const [prompt, setPrompt] = useState();
 
   useEffect(() => {
     getTodos();
     if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       switchTheme("dark")
     }
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      setPrompt(event);
+      setShowInstallButton(true);
+    });
   }, []);
 
 
@@ -57,6 +64,19 @@ function App() {
     setTheme(mode);
   }
 
+  function handleInstallClick () {
+    if (prompt) {
+      prompt.prompt();
+      prompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          setShowInstallButton(false);
+        }
+        setPrompt(null);
+        this.setState({ showInstallButton: false });
+      });
+    }
+  };
+
   return (
     <div className="max-w-screen-md flex flex-col p-4 mx-auto my-0 gap-4">
       <div className="flex gap-2 z-10">
@@ -78,22 +98,35 @@ function App() {
             </li>
           ))
         ) : (
-          <li className="text-center py-2 px-4 font-medium text-slate-800 dark:text-slate-100 ">No todos to display.</li>
+          <li className="text-center py-2 px-4 font-medium text-slate-800 dark:text-slate-100 flex flex-col gap-2">
+            <h3 className='text-lg'>Looks like there's nothing here... 😕</h3>
+            <p>Why not add a task? 💪</p>
+          </li>
         )}
       </ul>
-      <button onClick={() => switchTheme(theme == 'light' ? "dark" : "light" )} className="w-12 h-12 flex p-3 border text-slate-800 dark:text-slate-100 border-gray-300 dark:border-gray-700 bg-gray-200 dark:bg-gray-800 rounded-full right-3 bottom-3 fixed">
-        {
-          theme == 'light' ? (
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="w-full h-full" viewBox="0 0 16 16">
-              <path d="M12 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+      <div className="flex gap-2 right-3 bottom-3 fixed" >
+        {showInstallButton &&
+          <button  onClick={() => handleInstallClick()} className="w-12 h-12 flex p-3 border text-slate-800 dark:text-slate-100 border-gray-300 dark:border-gray-700 bg-gray-200 dark:bg-gray-800 rounded-full" title='Install App'>
+            <svg id="install-app" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
             </svg>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="w-full h-full" viewBox="0 0 16 16">
-              <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278zM4.858 1.311A7.269 7.269 0 0 0 1.025 7.71c0 4.02 3.279 7.276 7.319 7.276a7.316 7.316 0 0 0 5.205-2.162c-.337.042-.68.063-1.029.063-4.61 0-8.343-3.714-8.343-8.29 0-1.167.242-2.278.681-3.286z"/>
-            </svg>
-          )
+          </button>
         }
-      </button>
+        <button id="switch-theme" onClick={() => switchTheme(theme == 'light' ? "dark" : "light" )} className="w-12 h-12 flex p-3 border text-slate-800 dark:text-slate-100 border-gray-300 dark:border-gray-700 bg-gray-200 dark:bg-gray-800 rounded-full" title='Switch Theme'>
+          {
+            theme == 'light' ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="w-full h-full" viewBox="0 0 16 16">
+                <path d="M12 8a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="w-full h-full" viewBox="0 0 16 16">
+                <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278zM4.858 1.311A7.269 7.269 0 0 0 1.025 7.71c0 4.02 3.279 7.276 7.319 7.276a7.316 7.316 0 0 0 5.205-2.162c-.337.042-.68.063-1.029.063-4.61 0-8.343-3.714-8.343-8.29 0-1.167.242-2.278.681-3.286z"/>
+              </svg>
+            )
+          }
+        </button>
+      </div>
     </div>
   )
 }
